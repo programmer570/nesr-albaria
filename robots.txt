@@ -1,5 +1,4 @@
-
 User-agent: *
 Allow: /
 
-Sitemap: https://antonyos2010.github.io/nasr-albaria/sitemap.xml
+Sitemap: https://programmer570.github.io/nesr-albaria/sitemap.xml
