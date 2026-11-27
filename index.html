@@ -3688,6 +3688,24 @@ body.light .bb-sub-notice{
     </div>
    </div>
   </div>
+  <div id="adminDbBar">
+   <div class="mode-bar-title">
+    <b>🛢️ قاعدة البيانات والمزامنة (نقل آلي عند امتلاء أي قاعدة)</b>
+    <small id="dbRouterStatus">القاعدة النشطة: ⭐ الأساسي</small>
+   </div>
+   <div class="mode-bar-btns">
+    <button type="button" class="mode-sw-btn" data-nasr-sync-action="sync">🔄 مزامنة الآن</button>
+    <button type="button" class="mode-sw-btn" data-nasr-sync-action="archive" data-nasr-days="90">📦 أرشفة (أقدم من 90 يوم)</button>
+    <button type="button" class="mode-sw-btn" data-nasr-sync-action="health">📊 فحص الحجم</button>
+    <button type="button" class="mode-sw-btn" data-nasr-sync-action="switch" data-nasr-db="db1">⭐ الأساسي</button>
+    <button type="button" class="mode-sw-btn" data-nasr-sync-action="switch" data-nasr-db="db2">🟡 الاحتياطي 1</button>
+    <button type="button" class="mode-sw-btn" data-nasr-sync-action="switch" data-nasr-db="db3">🟢 الاحتياطي 2</button>
+   </div>
+   <script>
+   (function(){function up(){try{var s=window.NasrRouter&&window.NasrRouter.status();var el=document.getElementById("dbRouterStatus");if(s&&el){el.textContent="القاعدة النشطة: "+s.activeLabel+" — مرات النقل: "+s.switchCount+(s.lastHealth?(" — الحجم: "+s.lastHealth.size_mb+"MB ("+s.lastHealth.pct+"%)"):"")}}catch(e){}}
+   document.addEventListener("nasr-db-switch",up);document.addEventListener("nasr-sync-status",up);setTimeout(up,2500);setInterval(up,60000)})();
+   </script>
+  </div>
   <div class="admin-tabs">
    <button class="admin-tab active" type="button" onclick="adminTab('overview',this)">📊 نظرة عامة</button>
    <button class="admin-tab" type="button" onclick="adminTab('products',this)">📦 المنتجات</button>
@@ -3952,6 +3970,8 @@ body.light .bb-sub-notice{
  </section>
 </div>
 
+<script src="./db-router.js?v=1"></script>
+<script src="./sync-engine.js?v=1"></script>
 <script data-nasr-core="1">
 /* إعدادات Supabase الحالية */
 const SUPABASE_URL="https://jknvoihcxgdpcctvnhab.supabase.co";
@@ -3962,7 +3982,7 @@ const LOW_STOCK=5;
 let supabaseClient=null;
 const AUTH_URL0=(()=>{const q=new URLSearchParams(location.search),h=new URLSearchParams((location.hash||"").replace(/^#/,""));
  return {tokenHash:q.get("token_hash"),type:q.get("type")||h.get("type"),hashRecovery:h.get("type")==="recovery",err:h.get("error_code")||q.get("error_code"),signup:/^(signup|email)$/.test(q.get("type")||h.get("type")||""),code:!!q.get("code")}})();
-if(window.supabase&&typeof window.supabase.createClient==="function"){try{supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,storage:window.localStorage}})}catch(e){}}
+if(window.supabase&&typeof window.supabase.createClient==="function"){try{supabaseClient=window.NasrDBRouter?window.NasrDBRouter.install(window,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,storage:window.localStorage}}):window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,storage:window.localStorage}})}catch(e){}}
 /* لو مكتبة Supabase ما اتحملتش من الرابط الأول، يجرب رابط بديل */
 async function loadSupabaseFallback(){
  const urls=[
@@ -3973,7 +3993,7 @@ async function loadSupabaseFallback(){
   await new Promise(res=>{
    const s=document.createElement("script");
    s.src=u;
-   s.onload=()=>{try{supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,storage:window.localStorage}})}catch(e){}res()};
+   s.onload=()=>{try{supabaseClient=window.NasrDBRouter?window.NasrDBRouter.install(window,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,storage:window.localStorage}}):window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,storage:window.localStorage}})}catch(e){}res()};
    s.onerror=()=>res();
    document.head.appendChild(s);
   });
@@ -6172,13 +6192,14 @@ async function loadShippingRates(){
 }
 async function pushAddr(a){
  if(!currentSession||!supabaseClient)return;
- try{await supabaseClient.from("customer_addresses").upsert({user_id:currentSession.user.id,full_name:a.name,phone:a.phone,phone2:a.phone2||null,city:a.city,area:a.area||null,address:a.address,zip:a.zip||null,updated_at:new Date().toISOString()},{onConflict:"user_id"})}catch(e){console.error(e)}
+ try{await supabaseClient.from("customer_addresses").upsert({user_id:currentSession.user.id,user_email:(currentSession.user.email||"").toLowerCase()||null,full_name:a.name,phone:a.phone,phone2:a.phone2||null,city:a.city,area:a.area||null,address:a.address,zip:a.zip||null,updated_at:new Date().toISOString()},{onConflict:"user_id"})}catch(e){console.error(e)}
 }
 async function syncAddr(){
  if(!currentSession||!supabaseClient)return;
  const uid=currentSession.user.id;if(addrSyncedFor===uid)return;addrSyncedFor=uid;
  try{
-  const {data,error}=await supabaseClient.from("customer_addresses").select("*").eq("user_id",uid).maybeSingle();
+  let {data,error}=await supabaseClient.from("customer_addresses").select("*").eq("user_id",uid).maybeSingle();
+ if(error&&/user_email/.test(String(error.message||""))){const _r3=await supabaseClient.from("customer_addresses").select("*").eq("user_id",uid).maybeSingle();data=_r3.data;error=_r3.error;}
   if(error)throw error;
   if(data){
    try{localStorage.setItem("nasrAddr_"+uid,JSON.stringify({name:data.full_name,phone:data.phone,phone2:data.phone2||"",address:data.address,area:data.area||"",city:data.city,zip:data.zip||""}))}catch(e){}
@@ -6405,12 +6426,14 @@ $("checkoutForm").addEventListener("submit",async event=>{
   const f=$("coProof").files[0];
   const proofPath=f?await uploadProof(f):null;
   const items=activeItems.map(x=>({product_id:Number(x.id),quantity:Number(x.qty)}));
-  const {data,error}=await supabaseClient.rpc("place_store_order_v2",{
+  const _ordArgs={
    p_customer_name:a.name,p_phone:a.phone,p_address:address,p_city:a.city,p_notes:notes,p_items:items,
    p_payment_method:co.method,p_upfront_channel:co.method==="cod"?co.channel:null,
    p_upfront_amount:co.method==="cod"?co.upfront:null,
    p_transaction_ref:coNeedsPhone()?toLatin($("coPhone").value).replace(/[\s-]/g,""):"INSTAPAY",p_proof_path:proofPath
-  });
+  };
+  let {data,error}=await supabaseClient.rpc("place_store_order_v3",Object.assign({p_user_email:(currentSession.user.email||"").toLowerCase()||null},_ordArgs));
+  if(error&&/place_store_order_v3|PGRST202|42883|schema cache/i.test(String(error.message||""))){({data,error}=await supabaseClient.rpc("place_store_order_v2",_ordArgs));}
   if(error)throw error;
   const wasDirect=!!directBuyItems;
   directBuyItems=null;
@@ -6478,8 +6501,9 @@ async function showOrders(){
  $("orderDetailView").classList.add("hidden");$("ordersListView").classList.remove("hidden");
  $("ordersList").innerHTML='<div class="ord-skel"></div><div class="ord-skel"></div>';
  let query=supabaseClient.from("orders").select("*").order("created_at",{ascending:false});
- query=query.eq("user_id",currentSession.user.id);
- const {data,error}=await query;
+ const _oEm=(currentSession.user.email||"").toLowerCase().replace(/"/g,"");
+ let {data,error}=await (_oEm?query.or('user_id.eq.'+currentSession.user.id+',user_email.eq."'+_oEm+'"'):query.eq("user_id",currentSession.user.id));
+ if(error&&/user_email/.test(String(error.message||""))){const _r2=await supabaseClient.from("orders").select("*").order("created_at",{ascending:false}).eq("user_id",currentSession.user.id);data=_r2.data;error=_r2.error;}
  if(error){$("ordersList").innerHTML='<div class="ord-empty">تعذر تحميل الطلبات: '+escapeHTML(error.message)+'</div>';return}
  ordersCache=data||[];
  if(!ordersCache.length){
@@ -8988,7 +9012,7 @@ if(products.length&&typeof renderBestSellers==="function"){try{renderBestSellers
 (function(){
  const startBoot=async()=>{
   if(!supabaseClient&&window.supabase&&typeof window.supabase.createClient==="function"){
-   try{supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,storage:window.localStorage}})}catch(e){}
+   try{supabaseClient=window.NasrDBRouter?window.NasrDBRouter.install(window,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,storage:window.localStorage}}):window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,storage:window.localStorage}})}catch(e){}
   }
   if(!supabaseClient)await loadSupabaseFallback();
   if(!supabaseClient){toast("تعذر الاتصال بالخادم. تأكد من الإنترنت وحدّث الصفحة.",null,9000);return}
