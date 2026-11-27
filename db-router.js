@@ -24,8 +24,9 @@
       url: 'https://jknvoihcxgdpcctvnhab.supabase.co',
       key: 'sb_publishable_ScBUjfRWrmlmPPiquO_FHg_RFOv8j6N'
     },
-    { id: 'db2', label: '🟡 الاحتياطي الأول', url: 'https://zzyrzmkhhdcyuptvwnsd.supabase.co', key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp6eXJ6bWtoaGRjeXVwdHZ3bnNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTU4MDUwNjIsImV4cCI6MjExMTM4MTA2Mn0.k4Z4VwaPmt4Hzq6ys0e9jjNHdP2GShiJ3Wk0Fhcv-Cg' },
-    { id: 'db3', label: '🟢 الاحتياطي الثاني', url: '', key: '' }  // الخطة المجانية مسموح بيها قاعدتين بس — التالتة تتعمل لما يبقى فيه مكان
+    { id: 'db2', label: '🟡 الاحتياطي الأول', url: 'https://hltzaalxqpfpbkhmlyxv.supabase.co', key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhsdHphYWx4cXBmcGJraG1seXh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTU4MTA1MTMsImV4cCI6MjExMTM4NjUxM30.dGlhFOHSlNUvUu0YvYKPzk-Qfl_B-IAH1-_HgD1XB-w' },
+    { id: 'db3', label: '🟢 الاحتياطي الثاني', url: 'https://zcpwgcgdhfpklvrgdyga.supabase.co', key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpjcHdnY2dkaGZwa2x2cmdkeWdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTU4MTA1MjEsImV4cCI6MjExMTM4NjUyMX0.elANkcA31Kh0pMp8flim9bjWWfMYQL08bjAyMChhIRY' },
+    { id: 'db4', label: '🔵 الاحتياطي الثالث', url: 'https://fxzrumvpesytjwfaxitj.supabase.co', key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ4enJ1bXZwZXN5dGp3ZmF4aXRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTU4MTA1NDMsImV4cCI6MjExMTM4NjU0M30.EDhoIAW4-WmGr7zROYEI2_YAuDQBX0oQk1Kn2s3KkVM' }
   ];
 
   /* ---------- أدوات مساعدة ---------- */
