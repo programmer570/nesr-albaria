@@ -24,8 +24,8 @@
       url: 'https://jknvoihcxgdpcctvnhab.supabase.co',
       key: 'sb_publishable_ScBUjfRWrmlmPPiquO_FHg_RFOv8j6N'
     },
-    { id: 'db2', label: '🟡 الاحتياطي الأول', url: '', key: '' },
-    { id: 'db3', label: '🟢 الاحتياطي الثاني', url: '', key: '' }
+    { id: 'db2', label: '🟡 الاحتياطي الأول', url: 'https://zzyrzmkhhdcyuptvwnsd.supabase.co', key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp6eXJ6bWtoaGRjeXVwdHZ3bnNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTU4MDUwNjIsImV4cCI6MjExMTM4MTA2Mn0.k4Z4VwaPmt4Hzq6ys0e9jjNHdP2GShiJ3Wk0Fhcv-Cg' },
+    { id: 'db3', label: '🟢 الاحتياطي الثاني', url: '', key: '' }  // الخطة المجانية مسموح بيها قاعدتين بس — التالتة تتعمل لما يبقى فيه مكان
   ];
 
   /* ---------- أدوات مساعدة ---------- */
