@@ -217,6 +217,44 @@ async function doArchive(local: any, beforeDays: number) {
   return json({ ok: true, ...report });
 }
 
+/* ---------- عرض الأرشيف + الاسترجاع ---------- */
+async function ensureArchivesBucket(local: any) {
+  await local.storage.createBucket("archives", { public: false }).catch(() => {});
+}
+
+async function listArchives(local: any) {
+  await ensureArchivesBucket(local);
+  const { data, error } = await local.storage.from("archives").list("", { limit: 1000 });
+  if (error) throw new Error(`list archives: ${error.message}`);
+  const files = (data || [])
+    .filter((f: any) => f.name && f.name.endsWith(".json"))
+    .map((f: any) => ({ name: f.name, size: f.metadata?.size || 0, created: f.created_at || "" }))
+    .sort((a: any, b: any) => String(b.created).localeCompare(String(a.created)));
+  return json({ ok: true, count: files.length, files });
+}
+
+async function restoreArchive(local: any, fileName: string) {
+  if (!fileName || !/^[-a-zA-Z0-9_.]+\.json$/.test(fileName)) {
+    return json({ ok: false, error: "اسم ملف غير صالح" }, 400);
+  }
+  await ensureArchivesBucket(local);
+  const { data: blob, error } = await local.storage.from("archives").download(fileName);
+  if (error || !blob) return json({ ok: false, error: "الملف مش موجود في الأرشيف" }, 404);
+  const parsed = JSON.parse(await blob.text());
+  const table = String(parsed.table || "");
+  const rows = Array.isArray(parsed.rows) ? parsed.rows : [];
+  const allowed = new Set(ARCHIVE_TABLES.map((t) => t.name));
+  if (!allowed.has(table)) return json({ ok: false, error: `جدول غير مسموح: ${table}` }, 400);
+
+  let restored = 0;
+  for (const part of chunk(rows, 400)) {
+    const { error: upErr } = await local.from(table).upsert(part, { onConflict: "id", ignoreDuplicates: true });
+    if (upErr) throw new Error(`restore ${table}: ${upErr.message}`);
+    restored += part.length;
+  }
+  return json({ ok: true, table, restored, file: fileName, note: "البيانات رجعت للقاعدة — وشغّل action=sync لمزامنتها للمرتبتين" });
+}
+
 /* ---------- نقطة الدخول ---------- */
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
@@ -238,6 +276,8 @@ Deno.serve(async (req) => {
     const action = body.action || "sync";
     if (action === "sync") return await doSync(local);
     if (action === "archive") return await doArchive(local, Number(body.before_days) || 90);
+    if (action === "list-archives") return await listArchives(local);
+    if (action === "restore") return await restoreArchive(local, String(body.file || ""));
     return json({ ok: false, error: `action غير معروفة: ${action}` }, 400);
   } catch (e) {
     return json({ ok: false, error: String((e as Error)?.message || e) }, 500);

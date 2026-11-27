@@ -91,6 +91,35 @@
     });
   }
 
+  /* ---------- الأرشيف: عرض + استرجاع (مفيش حاجة بتتمسح نهائيًا) ---------- */
+  function listArchives() {
+    busy = true;
+    return invoke('list-archives', {}).then(function (res) {
+      busy = false;
+      if (res && res.error) { notify('❌ تعذر عرض الأرشيف: ' + (res.error.message || ''), 'archive-error'); return res; }
+      var d = res && res.data ? res.data : {};
+      var names = (d.files || []).map(function (f) { return f.name; }).slice(0, 8).join('، ');
+      notify('📦 الأرشيف فيه ' + (d.count || 0) + ' ملف محفوظ: ' + (names || '—'), 'archive-list');
+      return res;
+    }).catch(function (e) { busy = false; notify('❌ ' + (e && e.message || e), 'archive-error'); return { data: null, error: e }; });
+  }
+
+  function restoreArchive(fileName) {
+    var file = fileName;
+    try { if (!file && global.prompt) file = global.prompt('اسم ملف الأرشيف اللي عايز ترجّعه (من زر عرض الأرشيف):'); } catch (e) {}
+    if (!file) return Promise.resolve({ data: null, error: { message: 'ملغي' } });
+    if (busy) return Promise.resolve({ data: null, error: { message: 'عملية جارية بالفعل' } });
+    busy = true;
+    notify('🔄 بارجع بيانات الأرشيف...', 'restore-start');
+    return invoke('restore', { file: file }).then(function (res) {
+      busy = false;
+      if (res && res.error) { notify('❌ الاسترجاع فشل: ' + (res.error.message || ''), 'restore-error'); return res; }
+      var d = res && res.data ? res.data : {};
+      notify('✅ رجّعنا ' + (d.restored || 0) + ' صف من "' + (d.file || file) + '" — البيانات موجودة تاني 👌', 'restore-done');
+      return res;
+    }).catch(function (e) { busy = false; notify('❌ ' + (e && e.message || e), 'restore-error'); return { data: null, error: e }; });
+  }
+
   /* ---------- التشغيل التلقائي ---------- */
   function autoStart() {
     if (timer) return;
@@ -119,6 +148,8 @@
       var act = t.getAttribute('data-nasr-sync-action');
       if (act === 'sync') runSync();
       else if (act === 'archive') runArchive(t.getAttribute('data-nasr-days') || 90);
+      else if (act === 'list-archives') listArchives();
+      else if (act === 'restore') restoreArchive(t.getAttribute('data-nasr-file') || '');
       else if (act === 'health' && global.NasrRouter) {
         global.NasrRouter.checkHealth().then(function (r) {
           var h = r && r.data;
@@ -135,6 +166,8 @@
   global.NasrSync = {
     runSync: runSync,
     runArchive: runArchive,
+    listArchives: listArchives,
+    restoreArchive: restoreArchive,
     autoStart: autoStart,
     status: function () { return { busy: busy, lastResult: lastResult }; }
   };
